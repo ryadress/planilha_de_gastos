@@ -1,66 +1,83 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Controle de Meta - R$ 5.000</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: Arial;
-      background: #111;
-      color: #fff;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<title>Controle do Barbeiro</title>
 
-    table {
-      margin: 20px auto;
-      border-collapse: collapse;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: #111;
+  color: #fff;
+  text-align: center;
+}
 
-    th, td {
-      border: 1px solid #444;
-      padding: 10px;
-    }
+h1 {
+  margin-top: 20px;
+}
 
-    input {
-      width: 80px;
-      padding: 5px;
-      text-align: center;
-    }
+#painel {
+  margin: 20px;
+  font-size: 18px;
+}
 
-    canvas {
-      max-width: 700px;
-      margin: 30px auto;
-    }
-  </style>
+.bom { color: #00ff88; }
+.ruim { color: #ff4d4d; }
+
+table {
+  margin: 20px auto;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #444;
+  padding: 8px;
+}
+
+input {
+  width: 70px;
+  text-align: center;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  cursor: pointer;
+}
+</style>
 </head>
+
 <body>
 
 <h1>Meta: R$ 5.000</h1>
 
-<table id="tabela">
-  <tr>
-    <th>Dia</th>
-    <th>Ganho</th>
-    <th>Gastos</th>
-    <th>Guardado</th>
-    <th>Total</th>
-  </tr>
-</table>
+<div id="painel">
+  <p>Total: <span id="total">0</span></p>
+  <p>Faltam: <span id="faltam">5000</span></p>
+  <p>Meta diária: <span id="metaDia">0</span></p>
+</div>
 
-<canvas id="grafico"></canvas>
+<button onclick="resetar()">🔄 Resetar</button>
+
+<table id="tabela">
+<tr>
+  <th>Dia</th>
+  <th>Ganho</th>
+  <th>Gastos</th>
+  <th>Guardado</th>
+  <th>Total</th>
+</tr>
+</table>
 
 <script>
 let meta = 5000;
 let dias = 30;
 let tabela = document.getElementById("tabela");
 
-let dadosTotal = [];
-let labels = [];
-
-// 🔹 carregar dados salvos
+// carregar dados
 let dadosSalvos = JSON.parse(localStorage.getItem("dados")) || [];
 
+// criar tabela
 for (let i = 1; i <= dias; i++) {
   let row = tabela.insertRow();
 
@@ -79,31 +96,7 @@ for (let i = 1; i <= dias; i++) {
 
   guardado.innerText = "0";
   total.innerText = "0";
-
-  labels.push("Dia " + i);
-  dadosTotal.push(0);
 }
-
-let ctx = document.getElementById("grafico").getContext("2d");
-
-let grafico = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [
-      {
-        label: 'Total acumulado',
-        data: dadosTotal,
-        borderWidth: 2
-      },
-      {
-        label: 'Meta',
-        data: Array(dias).fill(meta),
-        borderWidth: 2
-      }
-    ]
-  }
-});
 
 function calcular() {
   let linhas = tabela.rows;
@@ -120,22 +113,46 @@ function calcular() {
     linhas[i].cells[3].innerText = guardado;
     linhas[i].cells[4].innerText = acumulado;
 
-    grafico.data.datasets[0].data[i-1] = acumulado;
-
-    // salvar dados
     dadosParaSalvar.push({
       ganho: ganho,
       gastos: gastos
     });
   }
 
-  // 🔹 salva no navegador
+  // salvar dados
   localStorage.setItem("dados", JSON.stringify(dadosParaSalvar));
 
-  grafico.update();
+  // atualizar painel
+  document.getElementById("total").innerText = acumulado.toFixed(2);
+
+  let faltam = meta - acumulado;
+  document.getElementById("faltam").innerText = faltam.toFixed(2);
+
+  let diasRestantes = dias;
+  let metaDia = faltam / diasRestantes;
+  document.getElementById("metaDia").innerText = metaDia.toFixed(2);
+
+  // feedback visual
+  let painel = document.getElementById("painel");
+
+  if (faltam <= 0) {
+    painel.className = "bom";
+  } else if (metaDia > 150) {
+    painel.className = "ruim";
+  } else {
+    painel.className = "";
+  }
 }
 
-// 🔹 recalcula ao abrir (carrega gráfico com dados salvos)
+// resetar
+function resetar() {
+  if (confirm("Tem certeza que quer apagar tudo?")) {
+    localStorage.removeItem("dados");
+    location.reload();
+  }
+}
+
+// carregar dados ao abrir
 calcular();
 </script>
 
