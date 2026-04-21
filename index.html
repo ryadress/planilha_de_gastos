@@ -58,6 +58,9 @@ let tabela = document.getElementById("tabela");
 let dadosTotal = [];
 let labels = [];
 
+// 🔹 carregar dados salvos
+let dadosSalvos = JSON.parse(localStorage.getItem("dados")) || [];
+
 for (let i = 1; i <= dias; i++) {
   let row = tabela.insertRow();
 
@@ -68,8 +71,11 @@ for (let i = 1; i <= dias; i++) {
   let guardado = row.insertCell(3);
   let total = row.insertCell(4);
 
-  ganho.innerHTML = `<input type="number" oninput="calcular()">`;
-  gastos.innerHTML = `<input type="number" oninput="calcular()">`;
+  let ganhoValor = dadosSalvos[i-1]?.ganho || "";
+  let gastosValor = dadosSalvos[i-1]?.gastos || "";
+
+  ganho.innerHTML = `<input type="number" value="${ganhoValor}" oninput="calcular()">`;
+  gastos.innerHTML = `<input type="number" value="${gastosValor}" oninput="calcular()">`;
 
   guardado.innerText = "0";
   total.innerText = "0";
@@ -102,10 +108,11 @@ let grafico = new Chart(ctx, {
 function calcular() {
   let linhas = tabela.rows;
   let acumulado = 0;
+  let dadosParaSalvar = [];
 
   for (let i = 1; i < linhas.length; i++) {
-    let ganho = linhas[i].cells[1].children[0].value || 0;
-    let gastos = linhas[i].cells[2].children[0].value || 0;
+    let ganho = Number(linhas[i].cells[1].children[0].value) || 0;
+    let gastos = Number(linhas[i].cells[2].children[0].value) || 0;
 
     let guardado = ganho - gastos;
     acumulado += guardado;
@@ -114,10 +121,22 @@ function calcular() {
     linhas[i].cells[4].innerText = acumulado;
 
     grafico.data.datasets[0].data[i-1] = acumulado;
+
+    // salvar dados
+    dadosParaSalvar.push({
+      ganho: ganho,
+      gastos: gastos
+    });
   }
+
+  // 🔹 salva no navegador
+  localStorage.setItem("dados", JSON.stringify(dadosParaSalvar));
 
   grafico.update();
 }
+
+// 🔹 recalcula ao abrir (carrega gráfico com dados salvos)
+calcular();
 </script>
 
 </body>
