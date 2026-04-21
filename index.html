@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Controle de Meta - R$ 5.000</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: #fff;
+      text-align: center;
+    }
+
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #444;
+      padding: 10px;
+    }
+
+    input {
+      width: 80px;
+      padding: 5px;
+      text-align: center;
+    }
+
+    canvas {
+      max-width: 700px;
+      margin: 30px auto;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Meta: R$ 5.000</h1>
+
+<table id="tabela">
+  <tr>
+    <th>Dia</th>
+    <th>Ganho</th>
+    <th>Gastos</th>
+    <th>Guardado</th>
+    <th>Total</th>
+  </tr>
+</table>
+
+<canvas id="grafico"></canvas>
+
+<script>
+let meta = 5000;
+let dias = 30;
+let tabela = document.getElementById("tabela");
+
+let dadosTotal = [];
+let labels = [];
+
+for (let i = 1; i <= dias; i++) {
+  let row = tabela.insertRow();
+
+  row.insertCell(0).innerText = i;
+
+  let ganho = row.insertCell(1);
+  let gastos = row.insertCell(2);
+  let guardado = row.insertCell(3);
+  let total = row.insertCell(4);
+
+  ganho.innerHTML = `<input type="number" oninput="calcular()">`;
+  gastos.innerHTML = `<input type="number" oninput="calcular()">`;
+
+  guardado.innerText = "0";
+  total.innerText = "0";
+
+  labels.push("Dia " + i);
+  dadosTotal.push(0);
+}
+
+let ctx = document.getElementById("grafico").getContext("2d");
+
+let grafico = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: 'Total acumulado',
+        data: dadosTotal,
+        borderWidth: 2
+      },
+      {
+        label: 'Meta',
+        data: Array(dias).fill(meta),
+        borderWidth: 2
+      }
+    ]
+  }
+});
+
+function calcular() {
+  let linhas = tabela.rows;
+  let acumulado = 0;
+
+  for (let i = 1; i < linhas.length; i++) {
+    let ganho = linhas[i].cells[1].children[0].value || 0;
+    let gastos = linhas[i].cells[2].children[0].value || 0;
+
+    let guardado = ganho - gastos;
+    acumulado += guardado;
+
+    linhas[i].cells[3].innerText = guardado;
+    linhas[i].cells[4].innerText = acumulado;
+
+    grafico.data.datasets[0].data[i-1] = acumulado;
+  }
+
+  grafico.update();
+}
+</script>
+
+</body>
+</html>
